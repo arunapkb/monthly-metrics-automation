@@ -1,0 +1,21 @@
+{
+  "BILLING": [
+    "bstark",
+    "bwayne",
+    "cpratt"
+  ],
+  "SUPPORT": [
+    "ckent",
+    "pparker",
+    "dprince"
+  ],
+  "INFRA": [
+    "tstark",
+    "bbanner",
+    "rrichards"
+  ],
+  "DATA": [
+    "srogers",
+    "wmaximoff"
+  ]
+}

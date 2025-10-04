@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "jira-automation"
+version = "1.0.0"
+description = "Automated Jira report generation and Google Sheets integration"
+authors = ["Your Name <your.email@company.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+selenium = "^4.15.0"
+webdriver-manager = "^4.0.1"
+google-auth = "^2.23.4"
+google-auth-oauthlib = "^1.1.0"
+google-api-python-client = "^2.108.0"
+google-auth-httplib2 = "^0.1.1"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+black = "^23.7.0"
+flake8 = "^6.0.0"
+mypy = "^1.5.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+jira-automation = "main:main"
