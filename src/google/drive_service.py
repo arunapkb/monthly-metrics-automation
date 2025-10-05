@@ -287,3 +287,17 @@ class GoogleDriveService:
         except Exception as e:
             print(f"❌ Error deleting file: {e}")
             return False
+
+    def find_spreadsheet_by_name(self, name, parent_id=None):
+        """Find a Google Sheet file by name in a parent folder."""
+        query = f"name='{name}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false"
+        if parent_id:
+            query += f" and '{parent_id}' in parents"
+        results = self.get_service().files().list(q=query, spaces='drive', fields='files(id, name)').execute()
+        files = results.get('files', [])
+        return files[0]['id'] if files else None
+
+    def copy_file(self, file_id, new_name, dest_folder_id):
+        """Copy a Google Drive file to a new location with a new name."""
+        body = {'name': new_name, 'parents': [dest_folder_id]}
+        return self.get_service().files().copy(fileId=file_id, body=body, fields='id, webViewLink').execute()

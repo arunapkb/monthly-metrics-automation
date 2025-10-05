@@ -75,6 +75,8 @@ class JiraAutomationWorkflow:
             # Step 4: Upload to Google Sheets
             self._upload_to_google_sheets(exported_file)
 
+            # Step 5: Copy Final monthly metrics and update it with generated jira google sheets.
+            self.copy_and_update_metrics()
             self.logger.info("Workflow completed successfully!")
             return True
 
@@ -130,7 +132,7 @@ class JiraAutomationWorkflow:
         # Create sheet name from file
         sheet_name = csv_file_path.stem  # filename without extension
 
-        # Upload and convert to Google Sheet
+        # Upload to downloads folder and convert to Google Sheet
         spreadsheet_info = sheets_service.upload_csv_as_google_sheet(
             local_csv_path=str(csv_file_path),
             folder_id=settings.DRIVE_FOLDER_ID,
@@ -194,6 +196,33 @@ class JiraAutomationWorkflow:
             self.logger.error(f"ERROR:Upload failed: {e}")
             raise
 
+    def copy_and_update_metrics(self):
+        gd = GoogleDriveService()
+        gs = GoogleSheetsService(gd)
+
+        # 1. Find template folder and file by name
+        template_folder_id = gd.find_folder_by_name("Automation_Monthly metrics - Pradeep").get('id')
+        file_id = gd.find_spreadsheet_by_name("Test_TSA Monthly Metrics_Sep_2025", parent_id=template_folder_id)
+
+        # 2. Copy the file to the destination folder (with new name)
+        from datetime import datetime
+        dest_folder_id = "1qrEWlZaEVCFxbyCcXLjxAkVFhr1jAbc8"
+        current_month = datetime.now().strftime("%B_%Y")
+        new_file_name = f"TSA Monthly Metrics_{current_month}"
+        copied_file = gd.copy_file(file_id, new_file_name, dest_folder_id)
+
+        # 3. Read 'Summary' sheet data from the copied file
+        spreadsheet_id = copied_file['id']
+        summary_data = gs.get_sheet_data(spreadsheet_id, "Summary")
+
+        # 4. Calculate required counts
+        row_count, bug_count = gs.count_rows_and_bugs(summary_data)
+
+        # (Optional: pick cell, e.g. D1, to update with these numbers)
+        message = f"Rows: {row_count}, Bugs: {bug_count}"
+        gs.update_sheet_cell(spreadsheet_id, "Summary", "D1", message)
+
+        print(f"Summary: {message}, Updated in {new_file_name} ({copied_file['webViewLink']})")
 
 def main():
     """Main entry point for the application."""
@@ -227,6 +256,9 @@ def main():
                 print("ERROR:--file argument required for upload-only mode")
                 sys.exit(1)
             workflow.run_upload_only(args.file)
+            success = True
+        elif args.mode == 'copyJiraCountAndUpdateMetrics-only':
+            workflow.copy_and_update_metrics()
             success = True
 
         sys.exit(0 if success else 1)

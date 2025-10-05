@@ -91,6 +91,11 @@ python main.py --mode export-only
 python main.py --mode upload-only --file path/to/your/file.csv
 ```
 
+#### Copy Final monthly metrics and update it with generated jira google sheets only
+```bash
+python main.py --mode copyJiraCountAndUpdateMetrics-only --file path/to/your/file.csv
+```
+
 ## Configuration Details
 
 ### Environment Variables (.env)
