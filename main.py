@@ -3,8 +3,8 @@
 Jira Automation Main Script
 Orchestrates the complete workflow: JumpCloud login -> Jira export -> Google Sheets upload
 """
-import sys
 import logging
+import sys
 from pathlib import Path
 
 # Add project root to path for imports
@@ -18,6 +18,7 @@ from src.jira.operations import JiraOperations
 from src.google.drive_service import GoogleDriveService
 from src.google.sheets_service import GoogleSheetsService
 from src.utils.file_operations import FileOperations
+
 
 class JiraAutomationWorkflow:
     """Main workflow orchestrator for Jira automation."""
@@ -38,14 +39,8 @@ class JiraAutomationWorkflow:
         """Setup logging configuration."""
         log_file = settings.LOGS_FOLDER / "jira_automation.log"
 
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_file),
-                logging.StreamHandler(sys.stdout)
-            ]
-        )
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
+                            handlers=[logging.FileHandler(log_file), logging.StreamHandler(sys.stdout)])
 
         self.logger = logging.getLogger(__name__)
 
@@ -76,7 +71,7 @@ class JiraAutomationWorkflow:
             self._upload_to_google_sheets(exported_file)
 
             # Step 5: Copy Final monthly metrics and update it with generated jira google sheets.
-            self.copy_and_update_metrics()
+            self.read_jira_report_and_update_count_to_monthly_metrics()
             self.logger.info("Workflow completed successfully!")
             return True
 
@@ -110,10 +105,7 @@ class JiraAutomationWorkflow:
 
         jira_ops = JiraOperations(self.driver)
 
-        exported_file = jira_ops.execute_jql_and_export(
-            jira_url=settings.JIRA_SEARCH_URL,
-            jql_query=settings.JQL_QUERY
-        )
+        exported_file = jira_ops.execute_jql_and_export(jira_url=settings.JIRA_SEARCH_URL, jql_query=settings.JQL_QUERY)
 
         if not exported_file or not exported_file.exists():
             raise Exception("Jira export failed - no file was created")
@@ -133,11 +125,9 @@ class JiraAutomationWorkflow:
         sheet_name = csv_file_path.stem  # filename without extension
 
         # Upload to downloads folder and convert to Google Sheet
-        spreadsheet_info = sheets_service.upload_csv_as_google_sheet(
-            local_csv_path=str(csv_file_path),
-            folder_id=settings.DRIVE_FOLDER_ID,
-            sheet_name=sheet_name
-        )
+        spreadsheet_info = sheets_service.upload_csv_as_google_sheet(local_csv_path=str(csv_file_path),
+                                                                     folder_id=settings.DRIVE_FOLDER_ID,
+                                                                     sheet_name=sheet_name)
 
         self.logger.info("Success: Google Sheets upload completed")
         return spreadsheet_info
@@ -150,11 +140,8 @@ class JiraAutomationWorkflow:
 
         # Optional: Clean old files
         try:
-            deleted_count = self.file_ops.clean_old_files(
-                directory_path=settings.DOWNLOADS_FOLDER,
-                max_age_days=7,
-                pattern="*.csv"
-            )
+            deleted_count = self.file_ops.clean_old_files(directory_path=settings.DOWNLOADS_FOLDER, max_age_days=7,
+                                                          pattern="*.csv")
             if deleted_count > 0:
                 self.logger.info(f"🗑Cleaned {deleted_count} old CSV files")
         except Exception as e:
@@ -196,7 +183,7 @@ class JiraAutomationWorkflow:
             self.logger.error(f"ERROR:Upload failed: {e}")
             raise
 
-    def copy_and_update_metrics(self):
+    def read_jira_report_and_update_count_to_monthly_metrics(self):
         gd = GoogleDriveService()
         gs = GoogleSheetsService(gd)
 
@@ -212,33 +199,31 @@ class JiraAutomationWorkflow:
         copied_file = gd.copy_file(file_id, new_file_name, dest_folder_id)
 
         # 3. Read 'Summary' sheet data from the copied file
-        spreadsheet_id = copied_file['id']
-        summary_data = gs.get_sheet_data(spreadsheet_id, "Summary")
+        jira_report_spreadsheet_id, jira_report_spreadsheet_name = gd.find_latest_spreadsheet_by_prefix('Jira_Report_',
+                                                                                                        parent_id=settings.DRIVE_FOLDER_ID)
+        summary_data = gs.get_sheet_data(jira_report_spreadsheet_id, "Summary")
 
         # 4. Calculate required counts
         row_count, bug_count = gs.count_rows_and_bugs(summary_data)
 
         # (Optional: pick cell, e.g. D1, to update with these numbers)
         message = f"Rows: {row_count}, Bugs: {bug_count}"
-        gs.update_sheet_cell(spreadsheet_id, "Summary", "D1", message)
+        monthly_metrics_spreadsheet_id = copied_file['id']
+        gs.update_sheet_cell(monthly_metrics_spreadsheet_id, "Summary", "B3", row_count)
+        gs.update_sheet_cell(monthly_metrics_spreadsheet_id, "Summary", "B4", bug_count)
 
         print(f"Summary: {message}, Updated in {new_file_name} ({copied_file['webViewLink']})")
+
 
 def main():
     """Main entry point for the application."""
     import argparse
 
     parser = argparse.ArgumentParser(description="Jira Automation Workflow")
-    parser.add_argument(
-        '--mode',
-        choices=['full', 'export-only', 'upload-only', 'copyJiraCountAndUpdateMetrics-only'],
-        default='full',
-        help='Workflow mode (default: full)'
-    )
-    parser.add_argument(
-        '--file',
-        help='CSV file path for upload-only mode'
-    )
+    parser.add_argument('--mode', choices=['full', 'export-only', 'upload-only',
+                                           'read_jira_report_and_update_count_to_monthly_metrics-only'], default='full',
+                        help='Workflow mode (default: full)')
+    parser.add_argument('--file', help='CSV file path for upload-only mode')
 
     args = parser.parse_args()
 
@@ -257,8 +242,8 @@ def main():
                 sys.exit(1)
             workflow.run_upload_only(args.file)
             success = True
-        elif args.mode == 'copyJiraCountAndUpdateMetrics-only':
-            workflow.copy_and_update_metrics()
+        elif args.mode == 'read_jira_report_and_update_count_to_monthly_metrics-only':
+            workflow.read_jira_report_and_update_count_to_monthly_metrics()
             success = True
 
         sys.exit(0 if success else 1)

@@ -2,9 +2,10 @@
 Example test file for Jira Automation Project.
 Run with: pytest tests/
 """
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -12,6 +13,7 @@ sys.path.insert(0, str(project_root))
 
 from config.settings import Settings
 from src.utils.file_operations import FileOperations
+
 
 class TestSettings:
     """Test the Settings class."""
@@ -22,6 +24,7 @@ class TestSettings:
         assert settings.PROJECT_ROOT is not None
         assert settings.DOWNLOADS_FOLDER is not None
         assert settings.SELENIUM_TIMEOUT == 20
+
 
 class TestFileOperations:
     """Test the FileOperations class."""
@@ -44,6 +47,7 @@ class TestFileOperations:
         """Test file info for non-existent file."""
         result = FileOperations.get_file_info("non_existent_file.txt")
         assert result is None
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

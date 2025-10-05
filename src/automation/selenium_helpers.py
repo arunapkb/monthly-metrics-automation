@@ -3,10 +3,12 @@ Selenium helper utilities for web automation.
 Provides robust, reusable functions for common Selenium operations.
 """
 import time
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+
 from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
 
 class SeleniumHelpers:
     """Collection of robust Selenium helper methods."""
@@ -88,11 +90,8 @@ class SeleniumHelpers:
         """
         wait = WebDriverWait(driver, timeout)
 
-        conditions = {
-            'visibility': EC.visibility_of_element_located,
-            'presence': EC.presence_of_element_located,
-            'clickable': EC.element_to_be_clickable
-        }
+        conditions = {'visibility': EC.visibility_of_element_located, 'presence': EC.presence_of_element_located,
+                      'clickable': EC.element_to_be_clickable}
 
         if condition not in conditions:
             raise ValueError(f"Invalid condition: {condition}. Must be one of {list(conditions.keys())}")
@@ -115,9 +114,7 @@ class SeleniumHelpers:
             timeout: Maximum time to wait (default: 30s)
         """
         try:
-            WebDriverWait(driver, timeout).until(
-                lambda d: d.execute_script("return document.readyState") == "complete"
-            )
+            WebDriverWait(driver, timeout).until(lambda d: d.execute_script("return document.readyState") == "complete")
             print("Success: Page loaded successfully")
         except TimeoutException:
             print("⚠Page load timeout - continuing anyway")

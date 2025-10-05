@@ -3,11 +3,13 @@ Google Sheets service module.
 Handles CSV to Sheets conversion and sheet operations.
 """
 import time
+
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
 from src.google.drive_service import GoogleDriveService
+
 
 class GoogleSheetsService:
     """Google Sheets service for spreadsheet operations."""
@@ -54,9 +56,7 @@ class GoogleSheetsService:
             sheets_service = self.get_sheets_service()
 
             # Upload and convert CSV to Google Sheet
-            spreadsheet_info = self._upload_and_convert_csv(
-                drive_service, local_csv_path, folder_id, sheet_name
-            )
+            spreadsheet_info = self._upload_and_convert_csv(drive_service, local_csv_path, folder_id, sheet_name)
 
             spreadsheet_id = spreadsheet_info.get('id')
 
@@ -80,23 +80,13 @@ class GoogleSheetsService:
 
     def _upload_and_convert_csv(self, drive_service, local_csv_path, folder_id, sheet_name):
         """Upload CSV and convert to Google Sheet."""
-        file_metadata = {
-            "name": sheet_name,
-            "parents": [folder_id],
-            "mimeType": "application/vnd.google-apps.spreadsheet"
-        }
+        file_metadata = {"name": sheet_name, "parents": [folder_id],
+            "mimeType": "application/vnd.google-apps.spreadsheet"}
 
-        media = MediaFileUpload(
-            local_csv_path, 
-            mimetype='text/csv', 
-            resumable=True
-        )
+        media = MediaFileUpload(local_csv_path, mimetype='text/csv', resumable=True)
 
-        uploaded_sheet = drive_service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields="id, name, webViewLink"
-        ).execute()
+        uploaded_sheet = drive_service.files().create(body=file_metadata, media_body=media,
+            fields="id, name, webViewLink").execute()
 
         print(f"Success: CSV uploaded and converted to Google Sheet")
         return uploaded_sheet
@@ -107,9 +97,7 @@ class GoogleSheetsService:
             print(f"🏷️ Renaming first sheet to '{new_name}'...")
 
             # Get spreadsheet metadata to find first sheet ID
-            spreadsheet_metadata = sheets_service.spreadsheets().get(
-                spreadsheetId=spreadsheet_id
-            ).execute()
+            spreadsheet_metadata = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
 
             sheets = spreadsheet_metadata.get('sheets', [])
 
@@ -125,23 +113,12 @@ class GoogleSheetsService:
             print(f"Success: Found first sheet with ID: {first_sheet_id}")
 
             # Prepare rename request
-            rename_request = {
-                'requests': [{
-                    'updateSheetProperties': {
-                        'properties': {
-                            'sheetId': first_sheet_id,
-                            'title': new_name
-                        },
-                        'fields': 'title'
-                    }
-                }]
-            }
+            rename_request = {'requests': [{
+                'updateSheetProperties': {'properties': {'sheetId': first_sheet_id, 'title': new_name},
+                    'fields': 'title'}}]}
 
             # Execute rename
-            sheets_service.spreadsheets().batchUpdate(
-                spreadsheetId=spreadsheet_id,
-                body=rename_request
-            ).execute()
+            sheets_service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=rename_request).execute()
 
             print(f"Success: First sheet renamed to '{new_name}'")
 
@@ -167,20 +144,10 @@ class GoogleSheetsService:
         try:
             sheets_service = self.get_sheets_service()
 
-            request_body = {
-                'requests': [{
-                    'addSheet': {
-                        'properties': {
-                            'title': sheet_name
-                        }
-                    }
-                }]
-            }
+            request_body = {'requests': [{'addSheet': {'properties': {'title': sheet_name}}}]}
 
-            response = sheets_service.spreadsheets().batchUpdate(
-                spreadsheetId=spreadsheet_id,
-                body=request_body
-            ).execute()
+            response = sheets_service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id,
+                body=request_body).execute()
 
             new_sheet = response['replies'][0]['addSheet']['properties']
             print(f"Success: New sheet '{sheet_name}' created with ID: {new_sheet['sheetId']}")
@@ -211,16 +178,10 @@ class GoogleSheetsService:
 
             value_input_option = 'RAW'  # or 'USER_ENTERED'
 
-            body = {
-                'values': data
-            }
+            body = {'values': data}
 
-            result = sheets_service.spreadsheets().values().update(
-                spreadsheetId=spreadsheet_id,
-                range=range_name,
-                valueInputOption=value_input_option,
-                body=body
-            ).execute()
+            result = sheets_service.spreadsheets().values().update(spreadsheetId=spreadsheet_id, range=range_name,
+                valueInputOption=value_input_option, body=body).execute()
 
             updated_cells = result.get('updatedCells', 0)
             print(f"Success: Updated {updated_cells} cells in '{sheet_name}'")
@@ -248,10 +209,8 @@ class GoogleSheetsService:
 
             range_name = f"'{sheet_name}'!{cell_range}"
 
-            result = sheets_service.spreadsheets().values().get(
-                spreadsheetId=spreadsheet_id,
-                range=range_name
-            ).execute()
+            result = sheets_service.spreadsheets().values().get(spreadsheetId=spreadsheet_id,
+                range=range_name).execute()
 
             values = result.get('values', [])
             print(f"Success: Read {len(values)} rows from '{sheet_name}'")
@@ -280,35 +239,14 @@ class GoogleSheetsService:
             # Get sheet ID by name
             sheet_id = self._get_sheet_id_by_name(spreadsheet_id, sheet_name)
 
-            request_body = {
-                'requests': [{
-                    'repeatCell': {
-                        'range': {
-                            'sheetId': sheet_id,
-                            'startRowIndex': header_row - 1,
-                            'endRowIndex': header_row
-                        },
-                        'cell': {
-                            'userEnteredFormat': {
-                                'textFormat': {
-                                    'bold': True
-                                },
-                                'backgroundColor': {
-                                    'red': 0.9,
-                                    'green': 0.9,
-                                    'blue': 0.9
-                                }
-                            }
-                        },
-                        'fields': 'userEnteredFormat(textFormat,backgroundColor)'
-                    }
-                }]
-            }
+            request_body = {'requests': [{'repeatCell': {
+                'range': {'sheetId': sheet_id, 'startRowIndex': header_row - 1, 'endRowIndex': header_row}, 'cell': {
+                    'userEnteredFormat': {'textFormat': {'bold': True},
+                        'backgroundColor': {'red': 0.9, 'green': 0.9, 'blue': 0.9}}},
+                'fields': 'userEnteredFormat(textFormat,backgroundColor)'}}]}
 
-            response = sheets_service.spreadsheets().batchUpdate(
-                spreadsheetId=spreadsheet_id,
-                body=request_body
-            ).execute()
+            response = sheets_service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id,
+                body=request_body).execute()
 
             print(f"Success: Header formatting applied to '{sheet_name}'")
             return response
@@ -321,9 +259,7 @@ class GoogleSheetsService:
         """Get sheet ID by sheet name."""
         sheets_service = self.get_sheets_service()
 
-        spreadsheet = sheets_service.spreadsheets().get(
-            spreadsheetId=spreadsheet_id
-        ).execute()
+        spreadsheet = sheets_service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
 
         for sheet in spreadsheet.get('sheets', []):
             if sheet['properties']['title'] == sheet_name:
@@ -333,10 +269,8 @@ class GoogleSheetsService:
 
     def get_sheet_data(self, spreadsheet_id, sheet_name):
         """Read all data from a specific sheet."""
-        return self.get_sheets_service().spreadsheets().values().get(
-            spreadsheetId=spreadsheet_id,
-            range=f"{sheet_name}"
-        ).execute().get('values', [])
+        return self.get_sheets_service().spreadsheets().values().get(spreadsheetId=spreadsheet_id,
+            range=f"{sheet_name}").execute().get('values', [])
 
     def count_rows_and_bugs(self, data):
         """Count rows (excluding header) and how many first column values start with 'BUG'."""
@@ -349,7 +283,5 @@ class GoogleSheetsService:
     def update_sheet_cell(self, spreadsheet_id, sheet_name, cell, value):
         """Update a specific cell in the sheet."""
         body = {"values": [[value]]}
-        return self.get_sheets_service().spreadsheets().values().update(
-            spreadsheetId=spreadsheet_id, range=f"{sheet_name}!{cell}",
-            valueInputOption="RAW", body=body
-        ).execute()
+        return self.get_sheets_service().spreadsheets().values().update(spreadsheetId=spreadsheet_id,
+            range=f"{sheet_name}!{cell}", valueInputOption="RAW", body=body).execute()

@@ -2,10 +2,10 @@
 File operations utilities.
 Handles file finding, renaming, and download management.
 """
-import os
 import time
 from datetime import datetime
 from pathlib import Path
+
 
 class FileOperations:
     """Utility class for file operations."""
@@ -155,15 +155,9 @@ class FileOperations:
 
         stat = file_path.stat()
 
-        return {
-            'name': file_path.name,
-            'size_bytes': stat.st_size,
-            'size_mb': round(stat.st_size / (1024 * 1024), 2),
-            'created': datetime.fromtimestamp(stat.st_ctime),
-            'modified': datetime.fromtimestamp(stat.st_mtime),
-            'extension': file_path.suffix,
-            'absolute_path': file_path.absolute()
-        }
+        return {'name': file_path.name, 'size_bytes': stat.st_size, 'size_mb': round(stat.st_size / (1024 * 1024), 2),
+            'created': datetime.fromtimestamp(stat.st_ctime), 'modified': datetime.fromtimestamp(stat.st_mtime),
+            'extension': file_path.suffix, 'absolute_path': file_path.absolute()}
 
     @staticmethod
     def wait_for_file_stable(file_path, stable_duration=2, max_wait=30):

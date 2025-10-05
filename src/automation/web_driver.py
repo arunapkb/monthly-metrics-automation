@@ -2,12 +2,13 @@
 WebDriver configuration and setup for Chrome browser.
 Handles Chrome options, download settings, and driver initialization.
 """
-import os
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+
 from config.settings import settings
+
 
 class WebDriverManager:
     """Manages Chrome WebDriver configuration and lifecycle."""
@@ -26,12 +27,8 @@ class WebDriverManager:
         chrome_options = Options()
 
         # Download preferences
-        prefs = {
-            "download.default_directory": settings.CHROME_DOWNLOAD_DIR,
-            "download.prompt_for_download": False,
-            "download.directory_upgrade": True,
-            "safebrowsing.enabled": True
-        }
+        prefs = {"download.default_directory": settings.CHROME_DOWNLOAD_DIR, "download.prompt_for_download": False,
+            "download.directory_upgrade": True, "safebrowsing.enabled": True}
         chrome_options.add_experimental_option("prefs", prefs)
 
         # Window size and display options
@@ -119,6 +116,7 @@ class WebDriverManager:
                 print(f"📸 Error screenshot saved to {screenshot_path}")
             except:
                 pass
+
 
 # Convenience function for quick driver setup
 def get_chrome_driver():

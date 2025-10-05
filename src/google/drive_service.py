@@ -2,8 +2,8 @@
 Google Drive service module.
 Handles Drive authentication, file uploads, and folder operations.
 """
-import os
 from pathlib import Path
+
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -12,6 +12,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 
 from config.settings import settings
+
 
 class GoogleDriveService:
     """Google Drive service for file operations."""
@@ -47,10 +48,7 @@ class GoogleDriveService:
 
         # Load existing token
         if settings.TOKEN_FILE.exists():
-            creds = Credentials.from_authorized_user_file(
-                str(settings.TOKEN_FILE),
-                settings.GOOGLE_SCOPES
-            )
+            creds = Credentials.from_authorized_user_file(str(settings.TOKEN_FILE), settings.GOOGLE_SCOPES)
 
         # Refresh or get new credentials
         if not creds or not creds.valid:
@@ -59,16 +57,11 @@ class GoogleDriveService:
                 creds.refresh(Request())
             else:
                 if not settings.CREDENTIALS_FILE.exists():
-                    raise FileNotFoundError(
-                        f"Google credentials file not found: {settings.CREDENTIALS_FILE}\n"
-                        "Please download it from Google Cloud Console"
-                    )
+                    raise FileNotFoundError(f"Google credentials file not found: {settings.CREDENTIALS_FILE}\n"
+                                            "Please download it from Google Cloud Console")
 
                 print("🆕 Getting new Google credentials...")
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    str(settings.CREDENTIALS_FILE),
-                    settings.GOOGLE_SCOPES
-                )
+                flow = InstalledAppFlow.from_client_secrets_file(str(settings.CREDENTIALS_FILE), settings.GOOGLE_SCOPES)
                 creds = flow.run_local_server(port=0)
 
             # Save credentials
@@ -113,10 +106,7 @@ class GoogleDriveService:
 
             # Prepare file metadata
             filename = new_filename or local_file_path.name
-            file_metadata = {
-                "name": filename,
-                "parents": [folder_id]
-            }
+            file_metadata = {"name": filename, "parents": [folder_id]}
 
             print(f"📤 Uploading '{local_file_path.name}' as '{filename}'...")
 
@@ -124,11 +114,8 @@ class GoogleDriveService:
             media = MediaFileUpload(str(local_file_path))
 
             # Upload file
-            uploaded_file = service.files().create(
-                body=file_metadata,
-                media_body=media,
-                fields="id, name, webViewLink"
-            ).execute()
+            uploaded_file = service.files().create(body=file_metadata, media_body=media,
+                fields="id, name, webViewLink").execute()
 
             print(f"Finished File upload successfully!")
             print(f"   File Name: {uploaded_file.get('name')}")
@@ -180,18 +167,12 @@ class GoogleDriveService:
         try:
             service = self.get_service()
 
-            folder_metadata = {
-                "name": folder_name,
-                "mimeType": "application/vnd.google-apps.folder"
-            }
+            folder_metadata = {"name": folder_name, "mimeType": "application/vnd.google-apps.folder"}
 
             if parent_folder_id:
                 folder_metadata["parents"] = [parent_folder_id]
 
-            folder = service.files().create(
-                body=folder_metadata,
-                fields="id, name, webViewLink"
-            ).execute()
+            folder = service.files().create(body=folder_metadata, fields="id, name, webViewLink").execute()
 
             print(f"Success: Folder '{folder_name}' created with ID: {folder.get('id')}")
             return folder
@@ -218,11 +199,7 @@ class GoogleDriveService:
             if parent_folder_id:
                 query += f" and '{parent_folder_id}' in parents"
 
-            response = service.files().list(
-                q=query,
-                spaces='drive',
-                fields='files(id, name, webViewLink)'
-            ).execute()
+            response = service.files().list(q=query, spaces='drive', fields='files(id, name, webViewLink)').execute()
 
             files = response.get('files', [])
 
@@ -254,11 +231,8 @@ class GoogleDriveService:
 
             query = f"'{folder_id}' in parents and trashed=false"
 
-            response = service.files().list(
-                q=query,
-                pageSize=max_results,
-                fields='files(id, name, mimeType, createdTime, modifiedTime, size)'
-            ).execute()
+            response = service.files().list(q=query, pageSize=max_results,
+                fields='files(id, name, mimeType, createdTime, modifiedTime, size)').execute()
 
             files = response.get('files', [])
             print(f"Success: Found {len(files)} files in folder")
@@ -301,3 +275,25 @@ class GoogleDriveService:
         """Copy a Google Drive file to a new location with a new name."""
         body = {'name': new_name, 'parents': [dest_folder_id]}
         return self.get_service().files().copy(fileId=file_id, body=body, fields='id, webViewLink').execute()
+
+    def find_latest_spreadsheet_by_prefix(self, prefix, parent_id=None):
+        """
+        Find the latest Google Sheet in a folder whose name starts with the given prefix.
+        Args:
+            prefix (str): The prefix the spreadsheet name should start with.
+            parent_id (str): The Drive folder ID to search in, or None for whole Drive.
+        Returns:
+            file_id (str) or None, file_name (str) or None
+        """
+        query = (f"name contains '{prefix}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false")
+        if parent_id:
+            query += f" and '{parent_id}' in parents"
+        results = self.get_service().files().list(q=query, spaces='drive',
+            fields='files(id, name, createdTime, modifiedTime)', orderBy='modifiedTime desc'  # Newest first
+        ).execute()
+        files = results.get('files', [])
+        if not files:
+            print(f"No spreadsheets starting with '{prefix}' found in specified folder.")
+            return None, None
+        # Return latest match
+        return files[0]['id'], files[0]['name']

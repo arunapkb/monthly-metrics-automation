@@ -2,13 +2,14 @@
 JumpCloud authentication module.
 Handles login, MFA, and session management for JumpCloud.
 """
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 from config.settings import settings
 from src.automation.selenium_helpers import SeleniumHelpers
+
 
 class JumpCloudAuth:
     """Handles JumpCloud authentication workflow."""
@@ -65,34 +66,16 @@ class JumpCloudAuth:
     def _enter_credentials(self):
         """Enter email and password credentials."""
         print("📧 Entering email...")
-        self.helpers.safe_send_keys(
-            self.driver, 
-            By.NAME, 
-            "email", 
-            settings.JUMPCLOUD_EMAIL
-        )
+        self.helpers.safe_send_keys(self.driver, By.NAME, "email", settings.JUMPCLOUD_EMAIL)
 
         # Click login button after email
-        self.helpers.safe_click(
-            self.driver,
-            By.CSS_SELECTOR,
-            'button[data-automation="loginButton"]'
-        )
+        self.helpers.safe_click(self.driver, By.CSS_SELECTOR, 'button[data-automation="loginButton"]')
 
         print("🔐 Entering password...")
-        self.helpers.safe_send_keys(
-            self.driver,
-            By.NAME,
-            "password",
-            settings.JUMPCLOUD_PASSWORD
-        )
+        self.helpers.safe_send_keys(self.driver, By.NAME, "password", settings.JUMPCLOUD_PASSWORD)
 
         # Click login button after password
-        self.helpers.safe_click(
-            self.driver,
-            By.CSS_SELECTOR,
-            'button[data-automation="loginButton"]'
-        )
+        self.helpers.safe_click(self.driver, By.CSS_SELECTOR, 'button[data-automation="loginButton"]')
 
         print("🔑 Credentials submitted")
 
@@ -124,8 +107,7 @@ class JumpCloudAuth:
         try:
             # Wait for search input (indicates dashboard is loaded)
             WebDriverWait(self.driver, settings.MFA_TIMEOUT).until(
-                ec.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="search"]'))
-            )
+                ec.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="search"]')))
             print("Success: JumpCloud dashboard loaded")
 
         except TimeoutException:
@@ -146,12 +128,7 @@ class JumpCloudAuth:
             print(f"🔍 Searching for '{app_search_term}' application...")
 
             # Search for the application
-            self.helpers.safe_send_keys(
-                self.driver,
-                By.CSS_SELECTOR,
-                'input[type="search"]',
-                app_search_term
-            )
+            self.helpers.safe_send_keys(self.driver, By.CSS_SELECTOR, 'input[type="search"]', app_search_term)
 
             # Click on the application
             self.helpers.safe_click(self.driver, By.CSS_SELECTOR, app_selector)
@@ -175,7 +152,5 @@ class JumpCloudAuth:
         """
         print("🎯 Navigating to Jira from JumpCloud...")
 
-        return self.navigate_to_app(
-            app_search_term="atlassian",
-            app_selector='a[href*="sso.jumpcloud.com/saml2/atlassiancloud"]'
-        )
+        return self.navigate_to_app(app_search_term="atlassian",
+            app_selector='a[href*="sso.jumpcloud.com/saml2/atlassiancloud"]')

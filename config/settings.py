@@ -51,24 +51,16 @@ class Settings:
 
     def _create_directories(self):
         """Create necessary project directories."""
-        directories = [
-            self.DOWNLOADS_FOLDER,
-            self.CREDENTIALS_FOLDER,
-            self.LOGS_FOLDER
-        ]
+        directories = [self.DOWNLOADS_FOLDER, self.CREDENTIALS_FOLDER, self.LOGS_FOLDER]
 
         for directory in directories:
             directory.mkdir(parents=True, exist_ok=True)
 
     def validate_credentials(self):
         """Validate that required credentials are available."""
-        required_vars = [
-            ('JC_USERNAME', self.JUMPCLOUD_EMAIL),
-            ('JC_PASSWORD', self.JUMPCLOUD_PASSWORD),
-            ('JIRA_SEARCH_URL', self.JIRA_SEARCH_URL),
-            ('JQL_QUERY', self.JQL_QUERY),
-            ('DRIVE_FOLDER_ID', self.DRIVE_FOLDER_ID)
-        ]
+        required_vars = [('JC_USERNAME', self.JUMPCLOUD_EMAIL), ('JC_PASSWORD', self.JUMPCLOUD_PASSWORD),
+            ('JIRA_SEARCH_URL', self.JIRA_SEARCH_URL), ('JQL_QUERY', self.JQL_QUERY),
+            ('DRIVE_FOLDER_ID', self.DRIVE_FOLDER_ID)]
 
         missing_vars = []
         for var_name, var_value in required_vars:

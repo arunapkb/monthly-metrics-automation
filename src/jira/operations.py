@@ -3,12 +3,14 @@ Jira operations module.
 Handles JQL queries, search operations, and CSV exports.
 """
 import time
-from selenium.webdriver.common.by import By
+
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.by import By
 
 from config.settings import settings
 from src.automation.selenium_helpers import SeleniumHelpers
 from src.utils.file_operations import FileOperations
+
 
 class JiraOperations:
     """Handles Jira-specific operations and exports."""
@@ -77,12 +79,7 @@ class JiraOperations:
         try:
             # Try to click JQL button (short timeout)
             jql_button_xpath = "//button[span[text()='JQL']]"
-            self.helpers.safe_click(
-                self.driver, 
-                By.XPATH, 
-                jql_button_xpath, 
-                timeout=5
-            )
+            self.helpers.safe_click(self.driver, By.XPATH, jql_button_xpath, timeout=5)
             print("Success: Switched to JQL mode")
         except (TimeoutException, Exception):
             print("Success: JQL mode already active")
@@ -93,20 +90,11 @@ class JiraOperations:
 
         # Enter JQL query
         jql_editor_selector = "div[data-testid='jql-editor-input']"
-        self.helpers.safe_send_keys(
-            self.driver,
-            By.CSS_SELECTOR,
-            jql_editor_selector,
-            jql_query
-        )
+        self.helpers.safe_send_keys(self.driver, By.CSS_SELECTOR, jql_editor_selector, jql_query)
 
         # Submit query
         search_button_selector = "button[data-testid='jql-editor-search']"
-        self.helpers.safe_click(
-            self.driver,
-            By.CSS_SELECTOR,
-            search_button_selector
-        )
+        self.helpers.safe_click(self.driver, By.CSS_SELECTOR, search_button_selector)
 
         print("Success: JQL query executed")
 
@@ -119,22 +107,14 @@ class JiraOperations:
 
         # Wait for export button and click it
         export_button_xpath = "//button[@data-testid='issue-navigator-action-export-issues.ui.filter-button--trigger']"
-        self.helpers.safe_click(
-            self.driver,
-            By.XPATH,
-            export_button_xpath
-        )
+        self.helpers.safe_click(self.driver, By.XPATH, export_button_xpath)
 
         # Short pause for dropdown menu
         time.sleep(1)
 
         # Click CSV export option
         csv_export_xpath = "//span[text()='Export CSV (my defaults)']"
-        self.helpers.safe_click(
-            self.driver,
-            By.XPATH,
-            csv_export_xpath
-        )
+        self.helpers.safe_click(self.driver, By.XPATH, csv_export_xpath)
 
         print("Success: CSV export initiated")
 
@@ -147,10 +127,8 @@ class JiraOperations:
         time.sleep(15)  # Wait for download
 
         # Find and rename the latest file
-        renamed_file = self.file_ops.find_and_rename_latest_file(
-            download_dir=settings.DOWNLOADS_FOLDER,
-            new_name_prefix="Jira_Report"
-        )
+        renamed_file = self.file_ops.find_and_rename_latest_file(download_dir=settings.DOWNLOADS_FOLDER,
+            new_name_prefix="Jira_Report")
 
         if renamed_file:
             print(f"Success: File successfully processed: {renamed_file.name}")
@@ -167,20 +145,11 @@ class JiraOperations:
         """
         try:
             # Look for results count element (this may vary based on Jira version)
-            count_selectors = [
-                ".issue-list-count",
-                "[data-testid='issue-count']",
-                ".search-results-count"
-            ]
+            count_selectors = [".issue-list-count", "[data-testid='issue-count']", ".search-results-count"]
 
             for selector in count_selectors:
                 try:
-                    element = self.helpers.wait_for_element(
-                        self.driver, 
-                        By.CSS_SELECTOR, 
-                        selector, 
-                        timeout=5
-                    )
+                    element = self.helpers.wait_for_element(self.driver, By.CSS_SELECTOR, selector, timeout=5)
                     count_text = element.text
                     # Extract number from text like "Showing 1-50 of 234 issues"
                     import re

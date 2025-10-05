@@ -42,6 +42,7 @@ jira-automation/
 ### 2. Installation Options
 
 #### Option A: Using Poetry (Recommended)
+
 ```bash
 # Install Poetry
 curl -sSL https://install.python-poetry.org | python3 -
@@ -54,6 +55,7 @@ poetry shell
 ```
 
 #### Option B: Using pip
+
 ```bash
 # Create virtual environment
 python -m venv venv
@@ -77,23 +79,27 @@ pip install -r requirements.txt
 ### 4. Usage
 
 #### Run Full Workflow
+
 ```bash
 python main.py --mode full
 ```
 
 #### Export from Jira Only
+
 ```bash
 python main.py --mode export-only
 ```
 
 #### Upload to Google Sheets Only
+
 ```bash
 python main.py --mode upload-only --file path/to/your/file.csv
 ```
 
 #### Copy Final monthly metrics and update it with generated jira google sheets only
+
 ```bash
-python main.py --mode copyJiraCountAndUpdateMetrics-only --file path/to/your/file.csv
+python main.py --mode read_jira_report_and_update_count_to_monthly_metrics-only --file path/to/your/file.csv
 ```
 
 ## Configuration Details
@@ -101,7 +107,7 @@ python main.py --mode copyJiraCountAndUpdateMetrics-only --file path/to/your/fil
 ### Environment Variables (.env)
 
 - `JC_USERNAME`: Your JumpCloud email
-- `JC_PASSWORD`: Your JumpCloud password  
+- `JC_PASSWORD`: Your JumpCloud password
 - `JIRA_SEARCH_URL`: Jira issues search URL
 - `JQL_QUERY`: JQL query to execute
 - `DRIVE_FOLDER_ID`: Google Drive folder ID for uploads
@@ -119,14 +125,14 @@ python main.py --mode copyJiraCountAndUpdateMetrics-only --file path/to/your/fil
 ### IDE Recommendations
 
 1. **PyCharm Community Edition** (Recommended for Python development)
-   - Excellent Python support
-   - Built-in debugging and testing
-   - Integrated Git support
+    - Excellent Python support
+    - Built-in debugging and testing
+    - Integrated Git support
 
 2. **Visual Studio Code**
-   - Lightweight and versatile
-   - Great extension ecosystem
-   - Python extension for development
+    - Lightweight and versatile
+    - Great extension ecosystem
+    - Python extension for development
 
 ### Running Tests
 
