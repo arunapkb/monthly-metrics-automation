@@ -201,7 +201,7 @@ class JiraAutomationWorkflow:
         gs = GoogleSheetsService(gd)
 
         # 1. Find template folder and file by name
-        template_folder_id = gd.find_folder_by_name("Automation_Monthly metrics - Pradeep").get('id')
+        template_folder_id = gd.find_folder_by_name("Automation_Monthly_Metrics_Pradeep").get('id')
         file_id = gd.find_spreadsheet_by_name("Test_TSA Monthly Metrics_Sep_2025", parent_id=template_folder_id)
 
         # 2. Copy the file to the destination folder (with new name)
@@ -231,7 +231,7 @@ def main():
     parser = argparse.ArgumentParser(description="Jira Automation Workflow")
     parser.add_argument(
         '--mode',
-        choices=['full', 'export-only', 'upload-only'],
+        choices=['full', 'export-only', 'upload-only', 'copyJiraCountAndUpdateMetrics-only'],
         default='full',
         help='Workflow mode (default: full)'
     )
