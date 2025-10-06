@@ -85,7 +85,7 @@ class JumpCloudAuth:
             print("🔐 Checking for MFA prompt...")
 
             # Look for JumpCloud Protect MFA button
-            mfa_button_xpath = "//span[contains(text(), 'JumpCloud Protect')]/ancestor::div[1]"
+            mfa_button_xpath = "//button[@data-test-id='UserLogin__MfaChooser__MfaButtons__push']"
 
             wait = WebDriverWait(self.driver, 10)
             mfa_button = wait.until(ec.visibility_of_element_located((By.XPATH, mfa_button_xpath)))

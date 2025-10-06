@@ -36,6 +36,17 @@ class Settings:
         self.JIRA_SEARCH_URL = os.getenv("JIRA_SEARCH_URL")
         self.JQL_QUERY = os.getenv("JQL_QUERY")
 
+        # NEW: Google Drive Folder and File IDs
+        self.TEMPLATE_FOLDER_NAME = os.getenv("TEMPLATE_FOLDER_NAME", "Automation_Monthly_Metrics_Pradeep")
+        self.TEMPLATE_FILE_NAME = os.getenv("TEMPLATE_FILE_NAME", "Test_TSA Monthly Metrics_Sep_2025")
+        self.MONTHLY_METRICS_FOLDER_ID = os.getenv("MONTHLY_METRICS_FOLDER_ID")
+        self.HELPDESK_CALLS_SPREADSHEET_ID = os.getenv("HELPDESK_CALLS_SPREADSHEET_ID")
+        self.HELPDESK_FILE_NAME = os.getenv("HELPDESK_FILE_NAME")
+
+        # NEW: Sheet Names
+        self.HELPDESK_SHEET_NAME = os.getenv("HELPDESK_SHEET_NAME", "Inbound calls Sept 2025")
+        self.SUMMARY_SHEET_NAME = os.getenv("SUMMARY_SHEET_NAME", "Summary")
+
         # Selenium configuration
         self.CHROME_DOWNLOAD_DIR = str(self.DOWNLOADS_FOLDER.absolute())
         self.SELENIUM_TIMEOUT = 20
@@ -58,9 +69,14 @@ class Settings:
 
     def validate_credentials(self):
         """Validate that required credentials are available."""
-        required_vars = [('JC_USERNAME', self.JUMPCLOUD_EMAIL), ('JC_PASSWORD', self.JUMPCLOUD_PASSWORD),
-            ('JIRA_SEARCH_URL', self.JIRA_SEARCH_URL), ('JQL_QUERY', self.JQL_QUERY),
-            ('DRIVE_FOLDER_ID', self.DRIVE_FOLDER_ID)]
+        required_vars = [('JC_USERNAME', self.JUMPCLOUD_EMAIL),
+                         ('JC_PASSWORD', self.JUMPCLOUD_PASSWORD),
+                         ('JIRA_SEARCH_URL', self.JIRA_SEARCH_URL),
+                         ('JQL_QUERY', self.JQL_QUERY),
+                         ('DRIVE_FOLDER_ID', self.DRIVE_FOLDER_ID),
+                         ('MONTHLY_METRICS_FOLDER_ID', self.MONTHLY_METRICS_FOLDER_ID),
+                         ('HELPDESK_CALLS_SPREADSHEET_ID', self.HELPDESK_CALLS_SPREADSHEET_ID),
+                         ('HELPDESK_FILE_NAME', self.HELPDESK_FILE_NAME)]
 
         missing_vars = []
         for var_name, var_value in required_vars:

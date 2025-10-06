@@ -297,3 +297,12 @@ class GoogleDriveService:
             return None, None
         # Return latest match
         return files[0]['id'], files[0]['name']
+
+    def convert_excel_to_google_sheet(self, file_id, new_name, dest_folder_id):
+        body = {
+            'name': new_name,
+            'parents': [dest_folder_id],
+            'mimeType': 'application/vnd.google-apps.spreadsheet'
+        }
+        return self.get_service().files().copy(fileId=file_id, body=body).execute()
+

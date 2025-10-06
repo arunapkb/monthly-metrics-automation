@@ -272,13 +272,18 @@ class GoogleSheetsService:
         return self.get_sheets_service().spreadsheets().values().get(spreadsheetId=spreadsheet_id,
             range=f"{sheet_name}").execute().get('values', [])
 
-    def count_rows_and_bugs(self, data):
-        """Count rows (excluding header) and how many first column values start with 'BUG'."""
+    def count_rows(self, data):
+        """Count rows (excluding header)."""
         if not data or len(data) < 2:
-            return 0, 0  # no data or only header
+            return 0
+        return len(data) - 1  # exclude header
+
+    def count_bugs(self, data):
+        """Count how many first column values start with 'BUG' (excluding header)."""
+        if not data or len(data) < 2:
+            return 0
         rows = data[1:]  # exclude header
-        bug_count = sum(1 for row in rows if row and row[0].startswith("BUG"))
-        return len(rows), bug_count
+        return sum(1 for row in rows if row and row[0].startswith("BUG"))
 
     def update_sheet_cell(self, spreadsheet_id, sheet_name, cell, value):
         """Update a specific cell in the sheet."""

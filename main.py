@@ -6,6 +6,7 @@ Orchestrates the complete workflow: JumpCloud login -> Jira export -> Google She
 import logging
 import sys
 from pathlib import Path
+from datetime import datetime
 
 # Add project root to path for imports
 project_root = Path(__file__).parent
@@ -18,7 +19,7 @@ from src.jira.operations import JiraOperations
 from src.google.drive_service import GoogleDriveService
 from src.google.sheets_service import GoogleSheetsService
 from src.utils.file_operations import FileOperations
-
+from src.google.helpdesk_service import HelpdeskCallsService
 
 class JiraAutomationWorkflow:
     """Main workflow orchestrator for Jira automation."""
@@ -188,30 +189,48 @@ class JiraAutomationWorkflow:
         gs = GoogleSheetsService(gd)
 
         # 1. Find template folder and file by name
-        template_folder_id = gd.find_folder_by_name("Automation_Monthly_Metrics_Pradeep").get('id')
-        file_id = gd.find_spreadsheet_by_name("Test_TSA Monthly Metrics_Sep_2025", parent_id=template_folder_id)
+        template_folder_id = gd.find_folder_by_name(settings.TEMPLATE_FOLDER_NAME).get('id')
+       #file_id = gd.find_spreadsheet_by_name("Test_TSA Monthly Metrics_Sep_2025", parent_id=template_folder_id)
+        file_id = gd.find_spreadsheet_by_name(settings.TEMPLATE_FILE_NAME, parent_id=template_folder_id)
 
-        # 2. Copy the file to the destination folder (with new name)
-        from datetime import datetime
-        dest_folder_id = "1qrEWlZaEVCFxbyCcXLjxAkVFhr1jAbc8"
+        # 2. Copy the file to the # In the provided code, there is no reference to a variable or
+        # function named `dest`. If you could provide more context or
+        # specify where `dest` is used in the code snippet, I would be happy
+        # to help explain its purpose or functionality.
+        #destination folder (with new name)
+
         current_month = datetime.now().strftime("%B_%Y")
         new_file_name = f"TSA Monthly Metrics_{current_month}"
-        copied_file = gd.copy_file(file_id, new_file_name, dest_folder_id)
+        copied_file = gd.copy_file(file_id, new_file_name, settings.MONTHLY_METRICS_FOLDER_ID)
 
         # 3. Read 'Summary' sheet data from the copied file
         jira_report_spreadsheet_id, jira_report_spreadsheet_name = gd.find_latest_spreadsheet_by_prefix('Jira_Report_',
                                                                                                         parent_id=settings.DRIVE_FOLDER_ID)
-        summary_data = gs.get_sheet_data(jira_report_spreadsheet_id, "Summary")
+        summary_data = gs.get_sheet_data(jira_report_spreadsheet_id, settings.SUMMARY_SHEET_NAME)
 
         # 4. Calculate required counts
-        row_count, bug_count = gs.count_rows_and_bugs(summary_data)
+        row_count = gs.count_rows(summary_data)
+        bug_count = gs.count_bugs(summary_data)
 
         # (Optional: pick cell, e.g. D1, to update with these numbers)
-        message = f"Rows: {row_count}, Bugs: {bug_count}"
-        monthly_metrics_spreadsheet_id = copied_file['id']
-        gs.update_sheet_cell(monthly_metrics_spreadsheet_id, "Summary", "B3", row_count)
-        gs.update_sheet_cell(monthly_metrics_spreadsheet_id, "Summary", "B4", bug_count)
 
+        monthly_metrics_spreadsheet_id = copied_file['id']
+        gs.update_sheet_cell(monthly_metrics_spreadsheet_id, settings.SUMMARY_SHEET_NAME, "B3", row_count)
+        gs.update_sheet_cell(monthly_metrics_spreadsheet_id, settings.SUMMARY_SHEET_NAME, "B4", bug_count)
+
+        # MODULARIZED helpdesk calls logic:
+        helpdesk_calls_spreadsheet_id = settings.HELPDESK_CALLS_SPREADSHEET_ID
+        helpdesk = HelpdeskCallsService(gd, gs, logger=self.logger)
+        helpdesk_calls_spreadsheet_id = helpdesk.ensure_google_sheet(
+            helpdesk_calls_spreadsheet_id,
+            new_name=settings.HELPDESK_FILE_NAME,
+            dest_folder_id=settings.DRIVE_FOLDER_ID,
+        )
+        helpdesk_calls_row_count = helpdesk.get_helpdesk_calls_count(
+            helpdesk_calls_spreadsheet_id, settings.HELPDESK_SHEET_NAME
+        )
+        gs.update_sheet_cell(monthly_metrics_spreadsheet_id, settings.SUMMARY_SHEET_NAME, "B2", helpdesk_calls_row_count)
+        message = f"Rows: {row_count}, Bugs: {bug_count} helpdesk calls: {helpdesk_calls_row_count}"
         print(f"Summary: {message}, Updated in {new_file_name} ({copied_file['webViewLink']})")
 
 
@@ -243,6 +262,9 @@ def main():
             workflow.run_upload_only(args.file)
             success = True
         elif args.mode == 'read_jira_report_and_update_count_to_monthly_metrics-only':
+            if not args.file:
+                print("ERROR:--file argument required for read_jira_report_and_update_count_to_monthly_metrics-only mode")
+                sys.exit(1)
             workflow.read_jira_report_and_update_count_to_monthly_metrics()
             success = True
 
